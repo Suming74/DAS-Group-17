@@ -1,0 +1,157 @@
+---
+title: "DAS-group-17"
+format: pdf
+editor: visual
+---
+
+## Import Data
+
+```{r}
+data = read.csv("dataset17.csv")
+any(is.na(data))
+```
+
+## Library the Packages
+
+```{r}
+#| warning: false
+#| message: false
+library(tidyverse)
+library(moderndive)
+library(gapminder)
+library(sjPlot)
+library(stats)
+library(jtools)
+library(gridExtra)
+library(MASS)
+library(pscl)
+library(survival)
+library(fitdistrplus)
+library(gt)
+```
+
+## Introduction
+
+The data we obtained was a part of data from the Dallas animal shelter data. The data given included 1678 observations including the variables with 6 category variables and 1 numerical variable.
+
+Animal_type: 5 types of animals in the shelter Month: the month when the animal was admitted to the shelter. Year: the year when the animal was admitted to the shelter Intake_type: 3 different reasons for why the animal comes to the shelter. Outcome_type: 5 different results after the animal has finished assistance in the shelter. Chip_status: The status for the animal's chip status Time_at_shelter: The time for the animal to stay in the shelter?
+
+In particular, this report presents numerical and graphical summaries of the data from the shelter for 7 different variables. A general linear model would be also fitted for the data, judging by some criteria statistics.
+
+## Explanatory Data analysis
+
+At the beginning of the EDA, we found that the year and month should be a category variable, so we need to change them first.
+
+```{r}
+data$month = factor(data$month)
+data$year = factor(data$year)
+```
+
+### Summary Information
+
+As the only numerical variables in this data, time_at_shelter should be consider with some summary statistics.
+
+```{r}
+#| label: summary statistics for time_at_shelter
+summary1 = data%>%  
+  summarize('Mean' = mean(time_at_shelter),
+  'Median' = median(time_at_shelter),
+  'St.Dev' = sd(time_at_shelter))%>%
+mutate(Variable = "time_at_shelter")
+summary2 = data%>%
+  summarize(
+            'IQR' = quantile(time_at_shelter,0.75)-quantile(time_at_shelter,0.25),
+            'Min' = min(time_at_shelter),
+            'Max' = max(time_at_shelter))%>%
+mutate(Variable = "time_at_shelter")
+```
+
+```{r}
+#| label: tbl-summarize_the_information_from_time_at_shelter_1
+#| tbl-cap: Summary information of time_at_shelter part 1
+#| warning: false
+summary1%>%
+  dplyr::select(Variable,everything())%>%
+  gt()%>%
+  fmt_number(columns = c(Mean, Median, St.Dev), decimals = 2) %>%
+tab_style(style = cell_text(weight = "bold"),
+locations = cells_column_labels())
+```
+
+```{r}
+#| label: tbl-summarize_the_information_from_time_at_shelter_2
+#| tbl-cap: Summary information of time_at_shelter part 2
+#| warning: false
+summary2%>%
+  dplyr::select(Variable,everything())%>%
+  gt()%>%
+  fmt_number( decimals = 2) %>%
+tab_style(style = cell_text(weight = "bold"),
+locations = cells_column_labels())
+  
+```
+
+According to @tbl-summarize_the_information_from_time_at_shelter_2, we can find that the mean of the time_at_shelter is not equal to median, the variance of time_at_shelter is much larger than the mean. This situation should be consider more in the part of formal analysis.
+
+### Graphical Summaries
+
+```{r}
+#| label: fig-Histogram_for_time_at_shelter
+#| fig-cap: Frequency Distribution for time at shelter
+ggplot(data,aes(x = time_at_shelter))+
+  geom_histogram(col = "white",fill = "steelblue")
+```
+
+From the @fig-Histogram_for_time_at_shelter and @tbl-summarize_the_information_from_time_at_shelter_2, the distribution for time_at_shelter should not be the poisson distribution. With data being overly dispersed, we could consider the time_at_shelter as a negative binomial distribution.
+
+Based on data, it can be observed that the remaining six variables are categorical variables. Therefore, we can examine the distribution of categories by plotting bar plots.
+
+```{r}
+#| label: fig-bar_plot_for_categorical_variables
+#| fig-cap: bar plots for categorical variables
+a = ggplot(data,aes(x = animal_type))+
+  geom_bar(fill = "steelblue")
+b = ggplot(data,aes(x = month))+
+  geom_bar(fill = "steelblue")
+c = ggplot(data,aes(x = year))+
+  geom_bar(fill = "steelblue")
+d = ggplot(data,aes(x = intake_type))+
+  geom_bar(fill = "steelblue")
+e = ggplot(data,aes(x = outcome_type))+
+  geom_bar(fill = "steelblue")
+f = ggplot(data,aes(x = chip_status))+
+  geom_bar(fill = "steelblue")
+grid.arrange(a,b,c,d,e,f,nrow = 3)
+```
+
+The first figure in @fig-bar_plot_for_categorical_variables is a bar plot for the variable called animal_type, which shows that almost all the observations are cat and dog. With a similar situation, In the variable called outcome_type, the majority of the data are concentrated in three categories: adoption, euthanasia, and return to owner, with very few observations in the other two categories. We could also find the same situation in the bar plot for chip_status and intake_type, where only a very small portion of the data falls into the "CONFISCATED" and "UNABLE TO SCAN" category.
+
+In the bar plot for months, we find that the data for June, July, and August are more abundant compared to other months.
+
+Besides, the number of observations from 2016 is much less than the number of observations from 2017.
+
+```{r}
+#| label: fig-box_plot_for_categorical_variables
+#| fig-cap: box plots for categorical variables
+boxplot1 = ggplot(data,aes(x = animal_type,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+boxplot2 = ggplot(data,aes(x = month,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+boxplot3 = ggplot(data,aes(x = year,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+boxplot4 = ggplot(data,aes(x = intake_type,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+boxplot5 = ggplot(data,aes(x = outcome_type,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+boxplot6 = ggplot(data,aes(x = chip_status,y = time_at_shelter))+
+  geom_boxplot()+
+  coord_cartesian(ylim = c(0,20))
+grid.arrange(boxplot1,boxplot2,boxplot3,boxplot4,boxplot5,boxplot6,nrow = 3)
+```
+
+From @fig-box_plot_for_categorical_variables, with a similar situation, we can see the means of the various categories are not the same in the variables of animal_type,intake_type, outcome_type, and chip_status.Conversely, the means of the time-based categorical variables are almost identical.
