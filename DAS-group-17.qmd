@@ -274,3 +274,4 @@ ggplot(regression_hurdle,aes(x = residual))+
 qqnorm(residual)
 qqline(residual, col = "red")
 ```
+
