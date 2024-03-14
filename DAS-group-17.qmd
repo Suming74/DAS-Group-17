@@ -155,3 +155,50 @@ grid.arrange(boxplot1,boxplot2,boxplot3,boxplot4,boxplot5,boxplot6,nrow = 3)
 ```
 
 From @fig-box_plot_for_categorical_variables, with a similar situation, we can see the means of the various categories are not the same in the variables of animal_type,intake_type, outcome_type, and chip_status.Conversely, the means of the time-based categorical variables are almost identical.
+
+### Correlation between Explanatory variables
+```{r}
+#| label: tbl-correlation-between-variables
+#| tbl-cap: Correlation between Explanatory variables
+cramersV <- matrix(0, nrow = 6,ncol = 6)
+for (i in 1:6) {
+  for (j in 1:i) {
+    if (i != j) {
+      assocStats <- assocstats(table(data[,i], data[,j]))
+      cramersV[i,j] <- assocStats$cramer
+      cramersV[j,i] <- assocStats$cramer 
+    } else {
+      cramersV[i,j] <- 1 
+    }
+  }
+}
+cramersV = as.data.frame(cramersV)
+colnames(cramersV) = colnames(data[,1:6])
+rownames(cramersV) = colnames(data[,1:6])
+cramersV%>%
+  kableExtra::kable()
+```
+Since the @tbl-correlation-between-variables demonstrates the correlation coefficients between explanatory variables, we can clearly see a high correlation between month and year,which means that the variable of year could be indicated totally by the variable of month. So let's see more information from this two variables.
+
+Based on the situation, we suspect this is because some of the months fall in 2016, while the remaining months are in 2017.
+
+To clearly present the situation described above with the data, we will transform the month data into a numerical variable, adding 12 to the months of 2017, to illustrate the sequential information of the month variable.
+```{r}
+data$month = as.numeric(data$month)
+data$new_month = ifelse(data$year == "2017",data$month+12,data$month)
+```
+
+```{r}
+#| label: fig-new_month
+#| fig-cap: barplot for new month variable
+ggplot(data,aes(x = new_month))+
+  geom_bar(fill = "steelblue")
+```
+### Create new data
+```{r}
+#| label: create new data
+new_data = data%>%
+  dplyr::select(animal_type,new_month,intake_type,outcome_type,chip_status,time_at_shelter)
+```
+
+
