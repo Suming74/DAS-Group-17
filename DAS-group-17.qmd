@@ -28,6 +28,7 @@ library(pscl)
 library(survival)
 library(fitdistrplus)
 library(gt)
+library(vcd)
 ```
 
 ## Introduction
