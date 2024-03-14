@@ -28,6 +28,7 @@ library(pscl)
 library(survival)
 library(fitdistrplus)
 library(gt)
+library(vcd)
 ```
 
 ## Introduction
@@ -155,3 +156,121 @@ grid.arrange(boxplot1,boxplot2,boxplot3,boxplot4,boxplot5,boxplot6,nrow = 3)
 ```
 
 From @fig-box_plot_for_categorical_variables, with a similar situation, we can see the means of the various categories are not the same in the variables of animal_type,intake_type, outcome_type, and chip_status.Conversely, the means of the time-based categorical variables are almost identical.
+
+### Correlation between Explanatory variables
+```{r}
+#| label: tbl-correlation-between-variables
+#| tbl-cap: Correlation between Explanatory variables
+cramersV <- matrix(0, nrow = 6,ncol = 6)
+for (i in 1:6) {
+  for (j in 1:i) {
+    if (i != j) {
+      assocStats <- assocstats(table(data[,i], data[,j]))
+      cramersV[i,j] <- assocStats$cramer
+      cramersV[j,i] <- assocStats$cramer 
+    } else {
+      cramersV[i,j] <- 1 
+    }
+  }
+}
+cramersV = as.data.frame(cramersV)
+colnames(cramersV) = colnames(data[,1:6])
+rownames(cramersV) = colnames(data[,1:6])
+cramersV%>%
+  kableExtra::kable()
+```
+Since the @tbl-correlation-between-variables demonstrates the correlation coefficients between explanatory variables, we can clearly see a high correlation between month and year,which means that the variable of year could be indicated totally by the variable of month. So let's see more information from this two variables.
+
+Based on the situation, we suspect this is because some of the months fall in 2016, while the remaining months are in 2017.
+
+To clearly present the situation described above with the data, we will transform the month data into a numerical variable, adding 12 to the months of 2017, to illustrate the sequential information of the month variable.
+```{r}
+data$month = as.numeric(data$month)
+data$new_month = ifelse(data$year == "2017",data$month+12,data$month)
+```
+
+```{r}
+#| label: fig-new_month
+#| fig-cap: barplot for new month variable
+ggplot(data,aes(x = new_month))+
+  geom_bar(fill = "steelblue")
+```
+### Create new data
+```{r}
+#| label: create new data
+new_data = data%>%
+  dplyr::select(animal_type,new_month,intake_type,outcome_type,chip_status,time_at_shelter)
+```
+
+
+## Formal Analysis
+
+$$
+BIC = \ln(n)k - 2\ln(\hat{L})
+$$
+$$
+AIC = 2k - 2\ln(\hat{L})
+$$
+
+
+
+
+### GLM.nb model
+Since in the EDA part we found that the target variable don't follow the poisson distribution, the time_at_shelter also show the information that the variance of the variable is much larger than the mean, with a significantly over dispersed. So in this case, we may consider the general linear model for negtive binomial distribution.
+```{r}
+#| label: glm.nb model fitted
+glmnb = glm.nb(time_at_shelter~intake_type+outcome_type,new_data)
+BIC(glmnb);AIC(glmnb)
+summary(glmnb)
+residual = residuals(glmnb)
+index = c(1:length(residuals(glmnb)))
+predict = predict(glmnb)
+regression_glmnb = as.data.frame(cbind(index,residual,predict))
+colnames(regression_glmnb) = c("index","residual","predict")
+ggplot(regression_glmnb,aes(x = predict,y = residual))+
+  geom_jitter(alpha = 0.5)+
+  geom_hline(yintercept = 0,col = "steelblue",lwd = 1)
+ggplot(regression_glmnb,aes(x = residual))+
+  geom_histogram(bins = 30,col = "white",fill = "steelblue")
+qqnorm(residual)
+qqline(residual, col = "red")
+shapiro.test(residual)
+```
+### zero inflect model
+```{r}
+zeromodel <- zeroinfl(time_at_shelter ~ intake_type + outcome_type  |1,
+                     data = new_data, 
+                     dist = "negbin")
+BIC(zeromodel)
+summary(zeromodel)
+index = c(1:length(residuals(zeromodel)))
+predict = predict(zeromodel)
+residual = residuals(zeromodel)
+regression_zero = as.data.frame(cbind(index,residual,predict))
+colnames(regression_zero) = c("index","residual","predict")
+ggplot(regression_zero,aes(x = residual))+
+  geom_histogram()
+qqnorm(residual)
+qqline(residual, col = "red")
+shapiro.test(residual)
+```
+
+### hurdle model
+```{r}
+hurdle_model <- hurdle(time_at_shelter ~ intake_type+outcome_type+new_month| intake_type+outcome_type, data = new_data, 
+                       dist = "negbin", zero.dist = "binomial")
+BIC(hurdle_model)
+summary(hurdle_model)
+residual = residuals(hurdle_model)
+index = c(1:length(residuals(hurdle_model)))
+predict = predict(hurdle_model)
+regression_hurdle = as.data.frame(cbind(index,residual,predict))
+colnames(regression_hurdle) = c("index","residual","predict")
+ggplot(regression_hurdle,aes(x = predict,y = residual))+
+  geom_jitter(alpha = 0.5)+
+  geom_hline(yintercept = 0,col = "steelblue",lwd = 1)
+ggplot(regression_hurdle,aes(x = residual))+
+  geom_histogram(bins = 30,col = "white",fill = "steelblue")
+qqnorm(residual)
+qqline(residual, col = "red")
+```
