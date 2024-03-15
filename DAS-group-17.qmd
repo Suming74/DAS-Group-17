@@ -46,6 +46,7 @@ At the beginning of the EDA, we found that the year and month should be a catego
 ```{r}
 data$month = factor(data$month)
 data$year = factor(data$year)
+
 ```
 
 ### Summary Information
@@ -111,17 +112,21 @@ Based on data, it can be observed that the remaining six variables are categoric
 #| label: fig-bar_plot_for_categorical_variables
 #| fig-cap: bar plots for categorical variables
 a = ggplot(data,aes(x = animal_type))+
-  geom_bar(fill = "steelblue")
+  geom_bar(fill = "steelblue")+
+  theme(axis.text.x = element_text(size = 5))
 b = ggplot(data,aes(x = month))+
   geom_bar(fill = "steelblue")
 c = ggplot(data,aes(x = year))+
   geom_bar(fill = "steelblue")
 d = ggplot(data,aes(x = intake_type))+
-  geom_bar(fill = "steelblue")
+  geom_bar(fill = "steelblue")+
+  theme(axis.text.x = element_text(size = 5))
 e = ggplot(data,aes(x = outcome_type))+
-  geom_bar(fill = "steelblue")
+  geom_bar(fill = "steelblue")+
+  theme(axis.text.x = element_text(size = 5))
 f = ggplot(data,aes(x = chip_status))+
-  geom_bar(fill = "steelblue")
+  geom_bar(fill = "steelblue")+
+  theme(axis.text.x = element_text(size = 5))
 grid.arrange(a,b,c,d,e,f,nrow = 3)
 ```
 
@@ -136,7 +141,8 @@ Besides, the number of observations from 2016 is much less than the number of ob
 #| fig-cap: box plots for categorical variables
 boxplot1 = ggplot(data,aes(x = animal_type,y = time_at_shelter))+
   geom_boxplot()+
-  coord_cartesian(ylim = c(0,20))
+  coord_cartesian(ylim = c(0,20))+
+  theme(axis.text.x = element_text(size = 5))
 boxplot2 = ggplot(data,aes(x = month,y = time_at_shelter))+
   geom_boxplot()+
   coord_cartesian(ylim = c(0,20))
@@ -145,19 +151,23 @@ boxplot3 = ggplot(data,aes(x = year,y = time_at_shelter))+
   coord_cartesian(ylim = c(0,20))
 boxplot4 = ggplot(data,aes(x = intake_type,y = time_at_shelter))+
   geom_boxplot()+
-  coord_cartesian(ylim = c(0,20))
+  coord_cartesian(ylim = c(0,20))+
+  theme(axis.text.x = element_text(size = 5))
 boxplot5 = ggplot(data,aes(x = outcome_type,y = time_at_shelter))+
   geom_boxplot()+
-  coord_cartesian(ylim = c(0,20))
+  coord_cartesian(ylim = c(0,20))+
+  theme(axis.text.x = element_text(size = 5))
 boxplot6 = ggplot(data,aes(x = chip_status,y = time_at_shelter))+
   geom_boxplot()+
-  coord_cartesian(ylim = c(0,20))
+  coord_cartesian(ylim = c(0,20))+
+  theme(axis.text.x = element_text(size = 5))
 grid.arrange(boxplot1,boxplot2,boxplot3,boxplot4,boxplot5,boxplot6,nrow = 3)
 ```
 
 From @fig-box_plot_for_categorical_variables, with a similar situation, we can see the means of the various categories are not the same in the variables of animal_type,intake_type, outcome_type, and chip_status.Conversely, the means of the time-based categorical variables are almost identical.
 
 ### Correlation between Explanatory variables
+
 ```{r}
 #| label: tbl-correlation-between-variables
 #| tbl-cap: Correlation between Explanatory variables
@@ -179,11 +189,13 @@ rownames(cramersV) = colnames(data[,1:6])
 cramersV%>%
   kableExtra::kable()
 ```
+
 Since the @tbl-correlation-between-variables demonstrates the correlation coefficients between explanatory variables, we can clearly see a high correlation between month and year,which means that the variable of year could be indicated totally by the variable of month. So let's see more information from this two variables.
 
 Based on the situation, we suspect this is because some of the months fall in 2016, while the remaining months are in 2017.
 
 To clearly present the situation described above with the data, we will transform the month data into a numerical variable, adding 12 to the months of 2017, to illustrate the sequential information of the month variable.
+
 ```{r}
 data$month = as.numeric(data$month)
 data$new_month = ifelse(data$year == "2017",data$month+12,data$month)
@@ -195,33 +207,57 @@ data$new_month = ifelse(data$year == "2017",data$month+12,data$month)
 ggplot(data,aes(x = new_month))+
   geom_bar(fill = "steelblue")
 ```
+
 ### Create new data
+
 ```{r}
 #| label: create new data
 new_data = data%>%
   dplyr::select(animal_type,new_month,intake_type,outcome_type,chip_status,time_at_shelter)
 ```
 
-
 ## Formal Analysis
+
+### Criteria statistics
 
 $$
 BIC = \ln(n)k - 2\ln(\hat{L})
-$$
+$$ 
+
 $$
 AIC = 2k - 2\ln(\hat{L})
 $$
 
+### GLM.NB Model
 
+Since in the EDA part we found that the target variable don't follow the poisson distribution, the time_at_shelter also show the information that the variance of the variable is much larger than the mean, with a significantly over dispersed. So in this case, we may consider the general linear model for negtive binomial distribution at first.
 
-
-### GLM.nb model
-Since in the EDA part we found that the target variable don't follow the poisson distribution, the time_at_shelter also show the information that the variance of the variable is much larger than the mean, with a significantly over dispersed. So in this case, we may consider the general linear model for negtive binomial distribution.
 ```{r}
 #| label: glm.nb model fitted
 glmnb = glm.nb(time_at_shelter~intake_type+outcome_type,new_data)
-BIC(glmnb);AIC(glmnb)
-summary(glmnb)
+```
+
+```{r}
+#| label: tbl-glmnb-model-coefficient
+#| tbl-cap: coefficient table for negative binomial GLM model
+coefficients(summary(glmnb))%>%
+  kableExtra::kable()
+```
+
+```{r}
+#| label: tbl-glmnb-model-criterial-statistics
+#| tbl-cap: criterial statistics for model
+cri = as.data.frame(c(BIC(glmnb),AIC(glmnb)))
+rownames(cri) = c("BIC","AIC");colnames(cri) = c("num")
+cri%>%
+  kableExtra::kable()
+```
+
+According to the @tbl-glmnb-model-coefficient and @tbl-glmnb-model-criterial-statistics, we could find that the model coefficient of outcome_typeFOSTER is not significant enough, Since we set the alpha equal to 0.05. This model's BIC is the smallest one in the models with different combinations of explanatory variables
+
+```{r}
+#| label: fig-residual-versus-fitted-value
+#| fig-cap: residual vs fitted value
 residual = residuals(glmnb)
 index = c(1:length(residuals(glmnb)))
 predict = predict(glmnb)
@@ -230,37 +266,99 @@ colnames(regression_glmnb) = c("index","residual","predict")
 ggplot(regression_glmnb,aes(x = predict,y = residual))+
   geom_jitter(alpha = 0.5)+
   geom_hline(yintercept = 0,col = "steelblue",lwd = 1)
+```
+
+```{r}
+#| label: fig-histogram-for-model-residuals
+#| fig-cap: histogram for model residuals
 ggplot(regression_glmnb,aes(x = residual))+
   geom_histogram(bins = 30,col = "white",fill = "steelblue")
-qqnorm(residual)
-qqline(residual, col = "red")
-shapiro.test(residual)
 ```
-### zero inflect model
+
+After observing the @fig-residual-versus-fitted-value and @fig-histogram-for-model-residuals, this model can barely pass the residual assumptions.
+
+### Zero-inflated Model
+
+While in the EDA part, There are a considerable amount of zero contained in the data. With this situation, the zero-inflated model for negative binomial distribution and the hurdle model would also be tried in our research.
+
 ```{r}
-zeromodel <- zeroinfl(time_at_shelter ~ intake_type + outcome_type  |1,
+#| label: zero-inflated model fitted
+zeromodel <- zeroinfl(time_at_shelter ~ new_month+intake_type + outcome_type|1,
                      data = new_data, 
                      dist = "negbin")
-BIC(zeromodel)
-summary(zeromodel)
+```
+
+```{r}
+#| label: tbl-zeromodel-criterial-statistics
+#| tbl-cap: zero
+cri = as.data.frame(c(BIC(zeromodel),AIC(zeromodel)))
+rownames(cri) = c("BIC","AIC");colnames(cri) = c("num")
+cri%>%
+  kableExtra::kable()
+```
+
+```{r}
+#| label: tbl-zeromodel-coefficient
+#| tbl-cap: coefficient table for zero-inflated model
+coefficients(summary(zeromodel))%>%
+  kableExtra::kable()
+```
+
+After observing the @tbl-zeromodel-coefficient and @tbl-zeromodel-criterial-statistics, This zero-inflated model's BIC is the smallest one in the models with different combinations. While they also demonstrated the coefficient of outcome_typeFOSTER is not significant, with a situation tha the p value of this coefficient is much larger than 0.05.
+
+```{r}
+#| label: fig-residual-versus-fitted-value-zeromodel
+#| fig-cap: residual vs fitted value
 index = c(1:length(residuals(zeromodel)))
 predict = predict(zeromodel)
 residual = residuals(zeromodel)
 regression_zero = as.data.frame(cbind(index,residual,predict))
 colnames(regression_zero) = c("index","residual","predict")
-ggplot(regression_zero,aes(x = residual))+
-  geom_histogram()
-qqnorm(residual)
-qqline(residual, col = "red")
-shapiro.test(residual)
+ggplot(regression_zero,aes(x = residual,y = predict))+
+  geom_point()+
+  geom_hline(yintercept = 0,lwd = 1)
 ```
 
-### hurdle model
 ```{r}
-hurdle_model <- hurdle(time_at_shelter ~ intake_type+outcome_type+new_month| intake_type+outcome_type, data = new_data, 
+#| label: fig-histogram-for-model-residuals-zeromodel
+#| fig-cap: histogram for zero inflect model residuals
+ggplot(regression_zero,aes(x = residual))+
+  geom_histogram(color = "white", fill = "steelblue")
+```
+
+However, the @fig-residual-versus-fitted-value-zeromodel shows a extreme situation of the residuals, Since all the residuals is larger than 0, The assumption that the residuals have a mean of zero is not met. We don't consider this model is suitable for the data we obtain.
+
+### Hurdle Model
+
+Hurdle model could be also considered with a situation that the data contain lots of zero. So we also fit a hurdle model for the data.
+
+```{r}
+#| label: hurdle model fitted
+hurdle_model <- hurdle(time_at_shelter ~ new_month+intake_type+outcome_type| intake_type+outcome_type, data = new_data, 
                        dist = "negbin", zero.dist = "binomial")
-BIC(hurdle_model)
-summary(hurdle_model)
+```
+
+```{r}
+#| label: tbl-coefficient-of-hurdle-model
+#| tbl-cap: coefficient table of hurdle model
+coefficients(summary(hurdle_model))%>%
+  kableExtra::kable()
+```
+
+```{r}
+#| label: tbl-hurdle-model-criterial-statistics
+#| tbl-cap: hurdle model coefficient table
+cri = as.data.frame(c(BIC(hurdle_model),AIC(hurdle_model)))
+rownames(cri) = c("BIC","AIC");colnames(cri) = c("num")
+cri%>%
+  kableExtra::kable()
+```
+
+With a consideration of @tbl-coefficient-of-hurdle-model@tbl-coefficient-of-hurdle-model and @tbl-coefficient-of-hurdle-model, the performance of the hurdle model is the best among these three models. The coefficient of outcome_typeFOSTER is not significant across all three models.
+
+```{r}
+#| label: fig-residual-versus-fitted-value-hurdle-model
+#| fig-cap: residual vs fitted value
 residual = residuals(hurdle_model)
 index = c(1:length(residuals(hurdle_model)))
 predict = predict(hurdle_model)
@@ -269,8 +367,13 @@ colnames(regression_hurdle) = c("index","residual","predict")
 ggplot(regression_hurdle,aes(x = predict,y = residual))+
   geom_jitter(alpha = 0.5)+
   geom_hline(yintercept = 0,col = "steelblue",lwd = 1)
-ggplot(regression_hurdle,aes(x = residual))+
-  geom_histogram(bins = 30,col = "white",fill = "steelblue")
-qqnorm(residual)
-qqline(residual, col = "red")
 ```
+
+```{r}
+#| label: fig-histogram-for-model-residuals-hurdle-model
+#| fig-cap: histogram for zero inflect model residuals
+ggplot(regression_hurdle,aes(x = residual))+
+  geom_histogram(bins = 32,col = "white",fill = "steelblue")
+```
+
+Observing from @fig-residual-versus-fitted-value-hurdle-model and @fig-histogram-for-model-residuals-hurdle-model, we may consider that the model roughly passes the zero-mean assumption and the constant variance assumption in the residual test, but through the histogram, the model may not pass the assumption that the residuals are normally distributed.
