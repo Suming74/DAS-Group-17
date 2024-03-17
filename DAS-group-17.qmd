@@ -422,7 +422,7 @@ $$ $$
 \end{aligned}
 $$
 
-## Condlusion
+## Conclusion 
 
 The negative binomial model was selected as the final model by analyzing and testing the model .
 
