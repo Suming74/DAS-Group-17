@@ -105,7 +105,7 @@ locations = cells_column_labels())
   
 ```
 
-According to @tbl-summarize_the_information_from_time_at_shelter_2, we can find that the mean of the time_at_shelter is not equal to median, the variance of time_at_shelter is much larger than the mean. This situation should be consider more in the part of formal analysis.
+According to @tbl-summarize_the_information_from_time_at_shelter_2, we can find that the mean of the time_at_shelter is not equal to the median, the variance of time_at_shelter is much larger than the mean. This situation should be considered more in the part of formal analysis.
 
 ### Graphical Summaries
 
@@ -422,7 +422,11 @@ $$ $$
 \end{aligned}
 $$
 
+<<<<<<< Updated upstream
 ## Conclusion 
+=======
+## Conclusion
+>>>>>>> Stashed changes
 
 The negative binomial model was selected as the final model by analyzing and testing the model .
 
