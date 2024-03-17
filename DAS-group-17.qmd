@@ -35,7 +35,19 @@ library(vcd)
 
 The data we obtained was a part of data from the Dallas animal shelter data. The data given included 1678 observations including the variables with 6 category variables and 1 numerical variable.
 
-Animal_type: 5 types of animals in the shelter Month: the month when the animal was admitted to the shelter. Year: the year when the animal was admitted to the shelter Intake_type: 3 different reasons for why the animal comes to the shelter. Outcome_type: 5 different results after the animal has finished assistance in the shelter. Chip_status: The status for the animal's chip status Time_at_shelter: The time for the animal to stay in the shelter?
+Animal_type: 5 types of animals in the shelter.
+
+Month: the month when the animal was admitted to the shelter.
+
+Year: the year when the animal was admitted to the shelter.
+
+Intake_type: 3 different reasons for why the animal comes to the shelter.
+
+Outcome_type: 5 different results after the animal has finished assistance in the shelter.
+
+Chip_status: The status for the animal's chip status.
+
+Time_at_shelter: The time for the animal to stay in the shelter.
 
 In particular, this report presents numerical and graphical summaries of the data from the shelter for 7 different variables. A general linear model would be also fitted for the data, judging by some criteria statistics.
 
@@ -285,9 +297,6 @@ $$
 \end{aligned}
 $$
 
-
-
-
 ### Zero-inflated Model
 
 While in the EDA part, There are a considerable amount of zero contained in the data. With this situation, the zero-inflated model for negative binomial distribution and the hurdle model would also be tried in our research.
@@ -348,7 +357,6 @@ $$
 \end{aligned}
 $$
 
-
 ### Hurdle Model
 
 Hurdle model could be also considered with a situation that the data contain lots of zero. So we also fit a hurdle model for the data.
@@ -375,7 +383,7 @@ cri%>%
   kableExtra::kable()
 ```
 
-With a consideration of @tbl-coefficient-of-hurdle-model@tbl-coefficient-of-hurdle-model and @tbl-coefficient-of-hurdle-model, the performance of the hurdle model is the best among these three models. The coefficient of outcome_typeFOSTER is not significant across all three models.
+With a consideration of @tbl-coefficient-of-hurdle-model\@tbl-coefficient-of-hurdle-model and @tbl-coefficient-of-hurdle-model, the performance of the hurdle model is the best among these three models. The coefficient of outcome_typeFOSTER is not significant across all three models.
 
 ```{r}
 #| label: fig-residual-versus-fitted-value-hurdle-model
@@ -406,8 +414,7 @@ $$
 - 0.29 \times \text{outcome\_type}_\text{EUTHANIZED} + 0.22 \times \text{outcome\_type}_\text{FOSTER} \\
 - 1.10 \times \text{outcome\_type}_\text{RETURN TO OWNER}
 \end{aligned}
-$$
-$$
+$$ $$
 \begin{aligned}
 \log \left( \frac{\pi}{1 - \pi} \right) = 7.81 - 4.39 \times \text{intake\_type}_\text{OWNER SURRENDER} - 3.55 \times \text{intake\_type}_\text{STRAY} \\
 - 2.59 \times \text{outcome\_type}_\text{DIED} - 3.51 \times \text{outcome\_type}_\text{EUTHANIZED} \\
@@ -415,13 +422,12 @@ $$
 \end{aligned}
 $$
 
-
 ## Condlusion
 
-The negative binomial model was selected as the final model by analyzing and testing the model . 
+The negative binomial model was selected as the final model by analyzing and testing the model .
 
 From this model it is possible to derive intake type and outcome type as factors that influence the number of days an animal spends in the shelter before their final outcome is decided. It is worth mentioning that month can also greatly influence the number of days an animal spends in the shelter in the Hurdle model.
 
-The intercept in the model means that the expected log count of time_at_shelter is 3.7436 when the reason for the animal being admitted to the shelter is confiscated and the final outcome of the admitted animal is adoption. The coefficient of -1.9517 for owner surrender indicates that for each unit increase in this category of the reason for the animal being admitted to the shelter is owner surrender compared to the other categories, the log count of time_at_ shelter decreases on average by about 1.9517. The rest of the coefficients can be interpreted similarly.
+The intercept in the model means that the expected log count of time_at_shelter is 3.7436 when the reason for the animal being admitted to the shelter is confiscated and the final outcome of the admitted animal is adoption. The coefficient of -1.9517 for owner surrender indicates that for each unit increase in this category of the reason for the animal being admitted to the shelter is owner surrender compared to the other categories, the log count of time_at\_ shelter decreases on average by about 1.9517. The rest of the coefficients can be interpreted similarly.
 
 According to the Bayesian Information Criterion, although other variables also contain information to predict time_at_shelter, the information contained in the two variables intake_type and outcome_type is relatively more substantial compared to the other variables.
