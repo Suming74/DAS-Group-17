@@ -222,7 +222,7 @@ new_data = data%>%
 
 $$
 BIC = \ln(n)k - 2\ln(\hat{L})
-$$ 
+$$
 
 $$
 AIC = 2k - 2\ln(\hat{L})
@@ -277,6 +277,17 @@ ggplot(regression_glmnb,aes(x = residual))+
 
 After observing the @fig-residual-versus-fitted-value and @fig-histogram-for-model-residuals, this model can barely pass the residual assumptions.
 
+$$
+\begin{aligned}
+\log(\mu) = 3.74 - 1.95 \times \text{intake\_type}_{\text{OWNER SURRENDER}} - 1.44 \times \text{intake\_type}_{\text{STRAY}} \\
+- 0.59 \times \text{outcome\_type}_{\text{DIED}} - 0.77 \times \text{outcome\_type}_{\text{EUTHANIZED}} \\
+- 0.09 \times \text{outcome\_type}_{\text{FOSTER}} - 1.75 \times \text{outcome\_type}_{\text{RETURN TO OWNER}}
+\end{aligned}
+$$
+
+
+
+
 ### Zero-inflated Model
 
 While in the EDA part, There are a considerable amount of zero contained in the data. With this situation, the zero-inflated model for negative binomial distribution and the hurdle model would also be tried in our research.
@@ -328,6 +339,16 @@ ggplot(regression_zero,aes(x = residual))+
 
 However, the @fig-residual-versus-fitted-value-zeromodel shows a extreme situation of the residuals, Since all the residuals is larger than 0, The assumption that the residuals have a mean of zero is not met. We don't consider this model is suitable for the data we obtain.
 
+$$
+\begin{aligned}
+\log(\mu) = 4.03 - 0.02 \times \text{new\_month} - 1.90 \times \text{intake\_type}_\text{OWNER SURRENDER} \\
+- 1.40 \times \text{intake\_type}_\text{STRAY} - 0.57 \times \text{outcome\_type}_\text{DIED} \\
+- 0.71 \times \text{outcome\_type}_\text{EUTHANIZED} - 0.03 \times \text{outcome\_type}_\text{FOSTER} \\
+- 1.69 \times \text{outcome\_type}_\text{RETURN TO OWNER}
+\end{aligned}
+$$
+
+
 ### Hurdle Model
 
 Hurdle model could be also considered with a situation that the data contain lots of zero. So we also fit a hurdle model for the data.
@@ -377,3 +398,28 @@ ggplot(regression_hurdle,aes(x = residual))+
 ```
 
 Observing from @fig-residual-versus-fitted-value-hurdle-model and @fig-histogram-for-model-residuals-hurdle-model, we may consider that the model roughly passes the zero-mean assumption and the constant variance assumption in the residual test, but through the histogram, the model may not pass the assumption that the residuals are normally distributed.
+
+$$
+\begin{aligned}
+\log(\mu) = 3.49 - 0.02 \times \text{new\_month} - 1.34 \times \text{intake\_type}_\text{OWNER SURRENDER} \\
+- 0.92 \times \text{intake\_type}_\text{STRAY} - 0.44 \times \text{outcome\_type}_\text{DIED} \\
+- 0.29 \times \text{outcome\_type}_\text{EUTHANIZED} + 0.22 \times \text{outcome\_type}_\text{FOSTER} \\
+- 1.10 \times \text{outcome\_type}_\text{RETURN TO OWNER}
+\end{aligned}
+$$
+$$
+\begin{aligned}
+\log \left( \frac{\pi}{1 - \pi} \right) = 7.81 - 4.39 \times \text{intake\_type}_\text{OWNER SURRENDER} - 3.55 \times \text{intake\_type}_\text{STRAY} \\
+- 2.59 \times \text{outcome\_type}_\text{DIED} - 3.51 \times \text{outcome\_type}_\text{EUTHANIZED} \\
+- 3.01 \times \text{outcome\_type}_\text{FOSTER} - 4.37 \times \text{outcome\_type}_\text{RETURN TO OWNER}
+\end{aligned}
+$$
+
+
+## Condlusion
+
+The negative binomial model was selected as the final model by analyzing and testing the model . 
+
+From this model it is possible to derive intake type and outcome type as factors that influence the number of days an animal spends in the shelter before their final outcome is decided. It is worth mentioning that month can also greatly influence the number of days an animal spends in the shelter in the Hurdle model.
+
+The intercept in the model means that the expected log count of time_at_shelter is 3.7436 when the reason for the animal being admitted to the shelter is confiscated and the final outcome of the admitted animal is adoption. The coefficient of -1.9517 for owner surrender indicates that for each unit increase in this category of the reason for the animal being admitted to the shelter is owner surrender compared to the other categories, the log count of time_at_ shelter decreases on average by about 1.9517. The rest of the coefficients can be interpreted similarly.
